@@ -70,7 +70,11 @@ enum nss_status nss_cache_init(const char *filename,
 	}
 
 	cache->dbenv->set_lg_max(cache->dbenv, 1 << 18);
+#if DB_VERSION_MAJOR > 4 || DB_VERSION_MINOR >= 2
 	cache->dbenv->set_flags(cache->dbenv, DB_LOG_AUTOREMOVE, 1);
+#else
+	cache->dbenv->set_flags(cache->dbenv, 0, 1);
+#endif
 
 	rc = cache->dbenv->open(cache->dbenv, DB_DIR,
 		DB_CREATE|DB_INIT_LOG|DB_INIT_LOCK|DB_INIT_MPOOL|
