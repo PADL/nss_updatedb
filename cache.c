@@ -116,10 +116,10 @@ enum nss_status nss_cache_init(const char *filename,
 		return NSS_STATUS_UNAVAIL;
 	}
 #if (DB_VERSION_MAJOR == 3) && (DB_VERSION_MINOR > 0)
-	rc = cache->db->open(cache->db, NULL, cache->filename, NULL,
+	rc = cache->db->open(cache->db, NULL, cache->filename,
 			     DB_BTREE, DB_CREATE | DB_TRUNCATE, mode);
 #elif (DB_VERSION_MAJOR == 3) && (DB_VERSION_MINOR == 0)
-	rc = cache->db->open(cache->db, NULL, cache->filename, DB_BTREE,
+	rc = cache->db->open(cache->db, NULL, cache->filename,
 			     DB_BTREE, DB_CREATE | DB_TRUNCATE, mode);
 #endif
 	if (rc != 0) {
