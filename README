@@ -1,0 +1,21 @@
+
+nss_updatedb
+============
+
+nss_updatedb is a simple tool for dumping users and groups
+from a nameservice into a local database. Along with the
+pam_ccreds module, also available from PADL, this allows
+for disconnected use of nameservice information.
+
+To configure, one would typically put something like the
+following in /etc/nsswitch.conf:
+
+passwd: files ldap [NOTFOUND=return] db
+group: files ldap [NOTFOUND=return] db
+
+and then configure nss_updatedb to be run from a cron job.
+
+The usage is:
+
+# nss_updatedb [nameservice] [passwd|group]
+
