@@ -1,6 +1,10 @@
 $Id$
 ===============================================================
 
+2	Luke Howard <lukeh@padl.com>
+
+	* fix DB build error
+
 1	Luke Howard <lukeh@padl.com>
 
 	* initial version

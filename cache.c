@@ -65,7 +65,7 @@ enum nss_status nss_cache_init(const char *filename,
 	rc = cache->db->open(cache->db, NULL, cache->filename, NULL,
 			     DB_BTREE, DB_CREATE | DB_TRUNCATE, mode);
 #else
-	rc = cache->db->open(cache->db, NULL, cache->filename, DB_BTREE,
+	rc = cache->db->open(cache->db, NULL, cache->filename,
 			     DB_BTREE, DB_CREATE | DB_TRUNCATE, mode);
 #endif
 	if (rc != 0) {
