@@ -227,6 +227,7 @@ enum nss_status nss_update_db(nss_backend_handle_t *handle,
 		status = nss_cache_commit(cache);
 	} else {
 		fprintf(stderr, "Failed to enumerate nameservice: %s\n", strerror(errno));
+		status = nss_cache_abort(cache);
 	}
 
 	nss_cache_close(&cache);

@@ -1,6 +1,14 @@
 $Id$
 ===============================================================
 
+3	Luke Howard <lukeh@padl.com>
+
+	* support for DB 4.x
+	* transact database update if DB library supports
+	  transactions
+	* make path configurable with DB_DIR
+	* support for "db_nss" library
+
 2	Luke Howard <lukeh@padl.com>
 
 	* fix DB build error

@@ -21,6 +21,7 @@
 #include <db.h>
 
 #include "cache.h"
+#include "updatedb.h"
 
 /*
  * Make name service data persistent
@@ -30,13 +31,17 @@ struct nss_cache {
 	char *filename;
 	DB *db;
 	int index;
+#if DB_VERSION_MAJOR >= 4
+	DB_ENV *dbenv;
+	DB_TXN *dbtxn;
+#endif
 };
 
 enum nss_status nss_cache_init(const char *filename,
 			       nss_cache_t **cache_p)
 {
 	nss_cache_t *cache;
-	int rc, mode = 0644;
+	int rc = -1, mode = 0644;
 
 	cache = (nss_cache_t *)calloc(1, sizeof(*cache));
 	if (cache == NULL) {
@@ -53,19 +58,64 @@ enum nss_status nss_cache_init(const char *filename,
 		return NSS_STATUS_TRYAGAIN;
 	}
 
-#if DB_VERSION_MAJOR > 2
-	rc = db_create(&cache->db, NULL, 0);
+#if DB_VERSION_MAJOR >= 4
+	cache->dbenv = NULL;
+	cache->dbtxn = NULL;
+
+	rc = db_env_create(&cache->dbenv, 0);
 	if (rc != 0) {
 		nss_cache_close(&cache);
 		errno = rc;
 		return NSS_STATUS_UNAVAIL;
 	}
 
-#if (DB_VERSION_MAJOR > 3) && (DB_VERSION_MINOR > 0)
+	cache->dbenv->set_lg_max(cache->dbenv, 1 << 18);
+	cache->dbenv->set_flags(cache->dbenv, DB_LOG_AUTOREMOVE, 1);
+
+	rc = cache->dbenv->open(cache->dbenv, DB_DIR,
+		DB_CREATE|DB_INIT_LOG|DB_INIT_LOCK|DB_INIT_MPOOL|
+		DB_INIT_TXN|DB_RECOVER, mode);
+	if (rc != 0) {
+		nss_cache_close(&cache);
+		errno = rc;
+		return NSS_STATUS_UNAVAIL;
+	}
+
+	rc = db_create(&cache->db, cache->dbenv, 0);
+	if (rc != 0) {
+		nss_cache_close(&cache);
+		errno = rc;
+		return NSS_STATUS_UNAVAIL;
+	}
+
+	rc = cache->dbenv->txn_begin(cache->dbenv, NULL, &cache->dbtxn, 0);
+	if (rc != 0) {
+		nss_cache_close(&cache);
+		errno = rc;
+		return NSS_STATUS_UNAVAIL;
+	}
+
+	rc = cache->db->open(cache->db,cache->dbtxn,
+			     cache->filename,NULL, 
+			     DB_BTREE,DB_CREATE, mode);
+	if (rc != 0) {
+		nss_cache_close(&cache);
+		errno = rc;
+		return NSS_STATUS_UNAVAIL;
+	}
+
+#elif DB_VERSION_MAJOR == 3
+	rc = db_create(&cache->db, NULL, 0);
+	if (rc != 0) {
+		nss_cache_close(&cache);
+		errno = rc;
+		return NSS_STATUS_UNAVAIL;
+	}
+#if (DB_VERSION_MAJOR == 3) && (DB_VERSION_MINOR > 0)
 	rc = cache->db->open(cache->db, NULL, cache->filename, NULL,
 			     DB_BTREE, DB_CREATE | DB_TRUNCATE, mode);
-#else
-	rc = cache->db->open(cache->db, NULL, cache->filename,
+#elif (DB_VERSION_MAJOR == 3) && (DB_VERSION_MINOR == 0)
+	rc = cache->db->open(cache->db, NULL, cache->filename, DB_BTREE,
 			     DB_BTREE, DB_CREATE | DB_TRUNCATE, mode);
 #endif
 	if (rc != 0) {
@@ -112,7 +162,9 @@ enum nss_status nss_cache_put(nss_cache_t *cache,
 	db_val.size = strlen(value) + 1;
 
 	rc = (cache->db->put)(cache->db,
-#if DB_VERSION_MAJOR >= 2
+#if DB_VERSION_MAJOR >= 4
+			      cache->dbtxn,
+#elif DB_VERSION_MAJOR >= 2
 			      NULL,
 #endif
 			      &db_key,
@@ -129,7 +181,7 @@ enum nss_status nss_cache_put(nss_cache_t *cache,
 #endif
 
 	if (rc == DB_KEYEXIST) {
-		fprintf(stderr, "Ignoring duplicate key %s\n", key);
+		/*fprintf(stderr, "Ignoring duplicate key %s\n", key);*/
 	} else if (rc != 0) {
 #if DB_VERSION_MAJOR >= 2
 		errno = rc;
@@ -338,6 +390,12 @@ enum nss_status nss_cache_commit(nss_cache_t *cache)
 	}
 #endif
 
+#if DB_VERSION_MAJOR >= 4
+	rc = cache->dbtxn->commit(cache->dbtxn, 0);
+	if (rc == 0 ) {
+		rc = cache->dbenv->txn_checkpoint(cache->dbenv, 0, 0, DB_FORCE);
+	}
+#endif
 	rc = (cache->db->sync)(cache->db, 0);
 	if (rc != 0) {
 #if DB_VERSION_MAJOR > 2
@@ -349,6 +407,20 @@ enum nss_status nss_cache_commit(nss_cache_t *cache)
 	return NSS_STATUS_SUCCESS;
 }
 
+enum nss_status nss_cache_abort(nss_cache_t *cache)
+{
+#if DB_VERSION_MAJOR >= 4
+	int rc;
+
+	rc = cache->dbtxn->abort(cache->dbtxn);
+	if (rc != 0) {
+		errno = rc;
+	}
+#endif
+
+	return NSS_STATUS_UNAVAIL;
+}
+
 enum nss_status nss_cache_close(nss_cache_t **cache_p)
 {
 	nss_cache_t *cache;
@@ -356,6 +428,9 @@ enum nss_status nss_cache_close(nss_cache_t **cache_p)
 	cache = *cache_p;
 
 	if (cache != NULL) {
+#if DB_VERSION_MAJOR >= 4
+		cache->dbenv->close(cache->dbenv, 0);
+#endif
 		if (cache->filename != NULL)
 			free(cache->filename);
 		free(cache);

@@ -100,6 +100,6 @@ int main(int argc, char *argv[])
 		printf("done.\n");
 	}
 
-	exit(NSS_STATUS_SUCCESS);
+	exit(0);
 }
 

@@ -4,6 +4,14 @@ nss_updatedb was written by Luke Howard <lukeh@padl.com>.
 Contributors should appraise themselves of the document at
 http://www.padl.com/Articles/GuidelinesforContributing.html.
 
+Special thanks go to people who have volunteered their time, effort,
+and ideas to make this software available.
+
+Please note that unless specifically indicated otherwise,
+PADL Software Pty Ltd retains copyright in all contributed code.
+
+	Buchan Milne <bgmilne@linux-mandrake.com>
+
 -- 
 Luke Howard
 lukeh@padl.com

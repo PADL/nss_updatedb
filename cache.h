@@ -38,6 +38,8 @@ enum nss_status nss_cache_putgrent(nss_cache_t *store,
 
 enum nss_status nss_cache_commit(nss_cache_t *store);
 
+enum nss_status nss_cache_abort(nss_cache_t *store);
+
 enum nss_status nss_cache_close(nss_cache_t **store_p);
 
 #endif /* _NSS_CACHE_H_ */
