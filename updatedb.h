@@ -21,8 +21,8 @@
 #define MAP_GROUP	0x02
 #define MAP_ALL		(MAP_PASSWD | MAP_GROUP)
 
-#define DB_PASSWD	"/var/db/passwd"
-#define DB_GROUP	"/var/db/group"
+#define DB_PASSWD	"/var/db/passwd.db"
+#define DB_GROUP	"/var/db/group.db"
 
 struct nss_backend_handle;
 typedef struct nss_backend_handle nss_backend_handle_t;

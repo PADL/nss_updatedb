@@ -1,6 +1,6 @@
 
-nss_updatedb
-============
+                        nss_updatedb
+                        ============
 
 nss_updatedb is a simple tool for dumping users and groups
 from a nameservice into a local database. Along with the
@@ -10,8 +10,8 @@ for disconnected use of nameservice information.
 To configure, one would typically put something like the
 following in /etc/nsswitch.conf:
 
-passwd: files ldap [NOTFOUND=return] db
-group: files ldap [NOTFOUND=return] db
+passwd:	files ldap [NOTFOUND=return] db
+group:	files ldap [NOTFOUND=return] db
 
 and then configure nss_updatedb to be run from a cron job.
 
@@ -19,3 +19,26 @@ The usage is:
 
 # nss_updatedb [nameservice] [passwd|group]
 
+If [passwd|group] is not specified, then both the passwd
+and group maps will be updated.
+
+Examples:
+
+Update /var/db/passwd.db from LDAP:
+
+# nss_updatedb ldap passwd
+
+Update /var/db/passwd.db & /var/db/group.db from LDAP:
+
+# nss_updatedb ldap
+
+Update /var/db/group.db from NIS+:
+
+# nss_updatedb nisplus group
+
+The databases written out are /var/db/passwd.db and
+/var/db/group.db; these are compatible with the nss_db
+module distributed with the GNU C Library.
+
+The nss_updatedb utility is distributed under the GNU General
+Public License.

@@ -27,9 +27,8 @@ enum nss_status nss_cache_init(const char *filename,
 			       nss_cache_t **store_p);
 
 enum nss_status nss_cache_put(nss_cache_t *store,
-			      int where,
-			      char *key,
-			      char *value);
+			      const char *key,
+			      const char *value);
 
 enum nss_status nss_cache_putpwent(nss_cache_t *store,
 				   struct passwd *pw);

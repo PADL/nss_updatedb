@@ -129,19 +129,8 @@ static enum nss_status _nss_pw_callback(nss_backend_handle_t *handle,
 					void *result,
 					void *private)
 {
-	struct passwd *pw = (struct passwd *)result;
-
-	printf("%s:%s:%d:%d:%s:%s:%s\n",
-	       pw->pw_name,
-	       (pw->pw_passwd != NULL) ? pw->pw_passwd : "x",
-	       pw->pw_uid,
-	       pw->pw_gid,
-	       (pw->pw_gecos != NULL) ? pw->pw_gecos : "",
-	       (pw->pw_dir != NULL) ? pw->pw_dir : "",
-	       (pw->pw_shell != NULL) ? pw->pw_shell : pw->pw_shell);
-
 	return nss_cache_putpwent((nss_cache_t *)private,
-					  (struct passwd *)result);
+				  (struct passwd *)result);
 }
 
 static enum nss_status _nss_gr_callback(nss_backend_handle_t *handle,
@@ -149,7 +138,7 @@ static enum nss_status _nss_gr_callback(nss_backend_handle_t *handle,
 					void *private)
 {
 	return nss_cache_putgrent((nss_cache_t *)private,
-					  (struct group *)result);
+				  (struct group *)result);
 }
 
 static enum nss_status _nss_enumerate(nss_backend_handle_t *handle,

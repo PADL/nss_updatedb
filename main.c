@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <assert.h>
 
@@ -14,21 +15,22 @@
 static void usage(void)
 {
 	fprintf(stderr, "Usage: nss_updatedb [nameservice] [passwd|group]\n");
-	exit(1);
+	exit(NSS_STATUS_UNAVAIL);
 }
 
-static void print_nss_error(const char *msg, enum nss_status status)
+static const char *nss_err2string(enum nss_status status)
 {
 	const char *serr;
 
-	assert(status != NSS_STATUS_SUCCESS);
-
 	switch (status) {
+	case NSS_STATUS_SUCCESS:
+		serr = "success";
+		break;
 	case NSS_STATUS_TRYAGAIN:
 		serr = "out of memory";
 		break;
 	case NSS_STATUS_UNAVAIL:
-		serr = "name service unavailable";
+		serr = "nameservice unavailable";
 		break;
 	case NSS_STATUS_NOTFOUND:
 		serr = "not found";
@@ -38,7 +40,7 @@ static void print_nss_error(const char *msg, enum nss_status status)
 		break;
 	}
 
-	fprintf(stderr, "%s: %s\n", msg, serr);
+	return serr;
 }
 
 int main(int argc, char *argv[])
@@ -53,6 +55,10 @@ int main(int argc, char *argv[])
 	}
 
 	dbname = argv[1];
+	if (strcmp(dbname, "db") == 0) {
+		fprintf(stderr, "Cannot run nss_updatedb against nss_db.\n");
+		exit(NSS_STATUS_UNAVAIL);
+	}
 
 	if (argc == 3) {
 		char *mapname;
@@ -75,17 +81,25 @@ int main(int argc, char *argv[])
 	}
 
 	if (maps & MAP_PASSWD) {
+		printf("passwd... ");
 		status = nss_update_db(handle, MAP_PASSWD, DB_PASSWD);
-		if (status != NSS_STATUS_SUCCESS)
+		if (status != NSS_STATUS_SUCCESS) {
+			printf("%s.\n", nss_err2string(status));
 			exit(status);
+		}
+		printf("done.\n");
 	}
 
 	if (maps & MAP_GROUP) {
+		printf("group... ");
 		status = nss_update_db(handle, MAP_GROUP, DB_GROUP);
-		if (status != NSS_STATUS_SUCCESS)
+		if (status != NSS_STATUS_SUCCESS) {
+			printf("%s.\n", nss_err2string(status));
 			exit(status);
+		}
+		printf("done.\n");
 	}
 
-	exit(0);
+	exit(NSS_STATUS_SUCCESS);
 }
 

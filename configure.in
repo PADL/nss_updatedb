@@ -12,5 +12,15 @@ AC_PROG_INSTALL
 AC_CHECK_HEADERS(nss.h)
 AC_CHECK_HEADERS(dlfcn.h)
                                                                            
+AC_CHECK_HEADERS(db.h)
+AC_CHECK_HEADERS(db1/db.h)
+AC_CHECK_HEADERS(db_185.h)
+AC_CHECK_HEADERS(db3/db_185.h)
+
+AC_CHECK_LIB(db, main,[LIBS="-ldb $LIBS" found_db_lib=yes],,$LIBS)
+if test -z "$found_db_lib"; then
+	AC_CHECK_LIB(db1, main,[LIBS="-ldb1 $LIBS" found_db_lib=yes],,$LIBS)
+fi
+
 AC_OUTPUT(Makefile)
 
