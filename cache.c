@@ -73,7 +73,14 @@ enum nss_status nss_cache_init(const char *filename,
 		errno = rc;
 		return NSS_STATUS_UNAVAIL;
 	}
-
+#elif DB_VERSION_MAJOR == 2
+	rc = db_open(cache->filename, DB_BTREE, DB_CREATE | DB_TRUNCATE,
+		     mode, NULL, NULL, &cache->db);
+	if (rc != 0) {
+		nss_cache_close(&cache);
+		errno = rc;
+		return NSS_STATUS_UNAVAIL;
+	}
 #else
 	cache->db = dbopen(cache->filename, O_CREAT | O_TRUNC,
 			   mode, DB_BTREE, NULL);

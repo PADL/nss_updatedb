@@ -432,9 +432,9 @@ s,@includedir@,${prefix}/include,;t t
 s,@oldincludedir@,/usr/include,;t t
 s,@infodir@,${prefix}/info,;t t
 s,@mandir@,${prefix}/man,;t t
-s,@build_alias@,i686-pc-linux-gnu,;t t
-s,@host_alias@,i686-pc-linux-gnu,;t t
-s,@target_alias@,i686-pc-linux-gnu,;t t
+s,@build_alias@,,;t t
+s,@host_alias@,,;t t
+s,@target_alias@,,;t t
 s,@DEFS@,-DHAVE_CONFIG_H,;t t
 s,@ECHO_C@,,;t t
 s,@ECHO_N@,-n,;t t
@@ -467,7 +467,7 @@ s,@install_sh@,/var/src/lukeh/padl/nss_updatedb/install-sh,;t t
 s,@STRIP@,,;t t
 s,@ac_ct_STRIP@,,;t t
 s,@INSTALL_STRIP_PROGRAM@,${SHELL} $(install_sh) -c -s,;t t
-s,@AWK@,gawk,;t t
+s,@AWK@,mawk,;t t
 s,@SET_MAKE@,,;t t
 s,@CC@,gcc,;t t
 s,@CFLAGS@,-g -O2,;t t
@@ -482,7 +482,7 @@ s,@am__quote@,,;t t
 s,@AMDEP_TRUE@,,;t t
 s,@AMDEP_FALSE@,#,;t t
 s,@AMDEPBACKSLASH@,\,;t t
-s,@CCDEPMODE@,depmode=gcc3,;t t
+s,@CCDEPMODE@,depmode=gcc,;t t
 s,@CPP@,gcc -E,;t t
 CEOF
 
@@ -597,7 +597,7 @@ esac
 # Don't blindly perform a `cd "$ac_dir"/$ac_foo && pwd` since $ac_foo can be
 # absolute.
 ac_abs_builddir=`cd "$ac_dir" && cd $ac_builddir && pwd`
-ac_abs_top_builddir=`cd "$ac_dir" && cd ${ac_top_builddir}. && pwd`
+ac_abs_top_builddir=`cd "$ac_dir" && cd $ac_top_builddir && pwd`
 ac_abs_srcdir=`cd "$ac_dir" && cd $ac_srcdir && pwd`
 ac_abs_top_srcdir=`cd "$ac_dir" && cd $ac_top_srcdir && pwd`
 
@@ -923,7 +923,7 @@ esac
 # Don't blindly perform a `cd "$ac_dir"/$ac_foo && pwd` since $ac_foo can be
 # absolute.
 ac_abs_builddir=`cd "$ac_dir" && cd $ac_builddir && pwd`
-ac_abs_top_builddir=`cd "$ac_dir" && cd ${ac_top_builddir}. && pwd`
+ac_abs_top_builddir=`cd "$ac_dir" && cd $ac_top_builddir && pwd`
 ac_abs_srcdir=`cd "$ac_dir" && cd $ac_srcdir && pwd`
 ac_abs_top_srcdir=`cd "$ac_dir" && cd $ac_top_srcdir && pwd`
 
