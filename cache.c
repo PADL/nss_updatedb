@@ -70,11 +70,7 @@ enum nss_status nss_cache_init(const char *filename,
 	}
 
 	cache->dbenv->set_lg_max(cache->dbenv, 1 << 18);
-#if DB_VERSION_MAJOR > 4 || DB_VERSION_MINOR >= 2
 	cache->dbenv->set_flags(cache->dbenv, DB_LOG_AUTOREMOVE, 1);
-#else
-	cache->dbenv->set_flags(cache->dbenv, 0, 1);
-#endif
 
 	rc = cache->dbenv->open(cache->dbenv, DB_DIR,
 		DB_CREATE|DB_INIT_LOG|DB_INIT_LOCK|DB_INIT_MPOOL|
@@ -115,13 +111,8 @@ enum nss_status nss_cache_init(const char *filename,
 		errno = rc;
 		return NSS_STATUS_UNAVAIL;
 	}
-#if (DB_VERSION_MAJOR == 3) && (DB_VERSION_MINOR > 0)
-	rc = cache->db->open(cache->db, NULL, cache->filename,
+	rc = cache->db->open(cache->db, cache->filename, NULL,
 			     DB_BTREE, DB_CREATE | DB_TRUNCATE, mode);
-#elif (DB_VERSION_MAJOR == 3) && (DB_VERSION_MINOR == 0)
-	rc = cache->db->open(cache->db, NULL, cache->filename,
-			     DB_BTREE, DB_CREATE | DB_TRUNCATE, mode);
-#endif
 	if (rc != 0) {
 		nss_cache_close(&cache);
 		errno = rc;
