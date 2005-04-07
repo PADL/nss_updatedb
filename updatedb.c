@@ -184,6 +184,7 @@ tryagain:
 			vtable->endent();
 			return NSS_STATUS_TRYAGAIN;
 		}
+		status = NSS_STATUS_SUCCESS; /* enter the loop again */
 		goto tryagain;
 	}
 
