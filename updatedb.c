@@ -166,16 +166,13 @@ static enum nss_status _nss_enumerate(nss_backend_handle_t *handle,
 	}
 
 tryagain:
-	while (status == NSS_STATUS_SUCCESS) {
+	do {
 		status = vtable->getent((void *)&result, buffer, buflen, &errnop);
 		if (status != NSS_STATUS_SUCCESS) {
 			break;
 		}
 		status = callback(handle, (void *)&result, private);
-		if (status != NSS_STATUS_SUCCESS) {
-			break;
-		}
-	};
+	} while (status == NSS_STATUS_SUCCESS);
 
 	if (status == NSS_STATUS_TRYAGAIN) {
 		buflen *= 2;

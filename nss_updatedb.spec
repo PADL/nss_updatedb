@@ -1,13 +1,15 @@
 Summary: NSS update DB tool
 Name: nss_updatedb
-Version: 1
+Version: 3
 Release: 1
-Source0: ftp://ftp.padl.com/pub/%{name}-%{version}.tar.gz
+Source0: %{name}.tgz
+Patch1: bugfix_out-of-mem.patch
 URL: http://www.padl.com/
 Copyright: GPL
 Group: System Environment/Base
 BuildRoot: %{_tmppath}/%{name}-root
 Requires: nss_db
+BuildRequires: gzip make pam-modules tar gcc glibc-devel binutils db-devel patch
 Obsoletes: nss_updatedb
 
 %description
@@ -15,7 +17,8 @@ The nss_updatedb tool synchronizes nameservice information
 with a local Berkeley DB cache.
 
 %prep
-%setup -q -a 0
+%setup
+%patch1 -p1
 
 %build
 ./configure
@@ -23,7 +26,7 @@ make
 
 %install
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT
-mkdir -p $RPM_BUILD_ROOT/{sbin}
+mkdir -p $RPM_BUILD_ROOT/sbin
 
 install -m 700 nss_updatedb $RPM_BUILD_ROOT/sbin
 
@@ -36,6 +39,3 @@ chmod 755 $RPM_BUILD_ROOT/sbin/nss_updatedb
 %defattr(-,root,root)
 %attr(0755,root,root) /sbin/nss_updatedb
 %doc AUTHORS NEWS COPYING README ChangeLog
-
-%changelog
-
