@@ -41,7 +41,7 @@ enum nss_status nss_cache_init(const char *filename,
 			       nss_cache_t **cache_p)
 {
 	nss_cache_t *cache;
-	int rc = -1, mode = 0644;
+	int rc = -1, mode = 0644, num;
 
 	cache = (nss_cache_t *)calloc(1, sizeof(*cache));
 	if (cache == NULL) {
@@ -95,9 +95,23 @@ enum nss_status nss_cache_init(const char *filename,
 		return NSS_STATUS_UNAVAIL;
 	}
 
-	rc = cache->db->open(cache->db,cache->dbtxn,
+	rc = cache->db->open(cache->db,0,
 			     cache->filename,NULL, 
-			     DB_BTREE,DB_CREATE, mode);
+			     DB_BTREE,DB_CREATE|DB_AUTO_COMMIT, mode);
+	if (rc != 0) {
+		nss_cache_close(&cache);
+		errno = rc;
+		return NSS_STATUS_UNAVAIL;
+	}
+
+	rc = cache->db->truncate(cache->db, cache->dbtxn, &num, 0);
+	if (rc != 0) {
+		nss_cache_close(&cache);
+		errno = rc;
+		return NSS_STATUS_UNAVAIL;
+	}
+
+	rc = cache->db->truncate(cache->db, cache->dbtxn, &num, 0);
 	if (rc != 0) {
 		nss_cache_close(&cache);
 		errno = rc;
@@ -424,6 +438,7 @@ enum nss_status nss_cache_close(nss_cache_t **cache_p)
 
 	if (cache != NULL) {
 #if DB_VERSION_MAJOR >= 4
+		cache->db->close(cache->db, 0);
 		cache->dbenv->close(cache->dbenv, 0);
 #endif
 		if (cache->filename != NULL)

@@ -1,6 +1,21 @@
 $Id$
 ===============================================================
 
+5	Guido Guenther <agx@sigxcpu.org>
+
+	* properly truncate the database in the db4 case,
+	  otherwise old entries (no longer in the ldap tree)
+	  won't get removed - we do the same for db3
+	* properly close the database before closing the
+	  environment. According to the docs we should do so
+	  before closing the environment
+	* use DB_AUTO_COMMIT with db->open so aborting the
+	  transaction works properly. The old method of passing
+	  the transaction ID doesn't seem to work with more recent
+	  libdb4.3 and libd4.4 releases. Without that you'll get a
+	  corrupted db when running nss_updatedb without a reachable
+	  ldap server.
+
 4	Luke Howard <lukeh@padl.com>
 
 	* fix BUG#206
