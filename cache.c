@@ -41,7 +41,8 @@ enum nss_status nss_cache_init(const char *filename,
 			       nss_cache_t **cache_p)
 {
 	nss_cache_t *cache;
-	int rc = -1, mode = 0644, num;
+	int rc = -1, mode = 0644;
+	u_int32_t num=0;	
 
 	cache = (nss_cache_t *)calloc(1, sizeof(*cache));
 	if (cache == NULL) {
@@ -98,13 +99,6 @@ enum nss_status nss_cache_init(const char *filename,
 	rc = cache->db->open(cache->db,0,
 			     cache->filename,NULL, 
 			     DB_BTREE,DB_CREATE|DB_AUTO_COMMIT, mode);
-	if (rc != 0) {
-		nss_cache_close(&cache);
-		errno = rc;
-		return NSS_STATUS_UNAVAIL;
-	}
-
-	rc = cache->db->truncate(cache->db, cache->dbtxn, &num, 0);
 	if (rc != 0) {
 		nss_cache_close(&cache);
 		errno = rc;

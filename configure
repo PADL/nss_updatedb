@@ -794,7 +794,7 @@ fi
 
 PACKAGE=nss_updatedb
 
-VERSION=3
+VERSION=6
 
 if test "`cd $srcdir && pwd`" != "`pwd`" && test -f $srcdir/config.status; then
   { echo "configure: error: source directory already configured; run "make distclean" there first" 1>&2; exit 1; }

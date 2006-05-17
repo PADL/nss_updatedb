@@ -1,6 +1,10 @@
 $Id$
 ===============================================================
 
+6	Guido Guenther <agx@sigxcpu.org>
+
+	* fix incorrectly applied patches
+
 5	Guido Guenther <agx@sigxcpu.org>
 
 	* properly truncate the database in the db4 case,
