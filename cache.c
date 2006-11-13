@@ -432,8 +432,10 @@ enum nss_status nss_cache_close(nss_cache_t **cache_p)
 
 	if (cache != NULL) {
 #if DB_VERSION_MAJOR >= 4
-		cache->db->close(cache->db, 0);
-		cache->dbenv->close(cache->dbenv, 0);
+		if (cache->db != NULL)
+			cache->db->close(cache->db, 0);
+		if (cache->dbenv != NULL)
+			cache->dbenv->close(cache->dbenv, 0);
 #endif
 		if (cache->filename != NULL)
 			free(cache->filename);

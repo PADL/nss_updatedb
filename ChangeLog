@@ -1,6 +1,10 @@
 $Id$
 ===============================================================
 
+7	Guido Guenther <agx@sigxcpu.org>
+
+	* fix a segfault in cache.c
+
 6	Guido Guenther <agx@sigxcpu.org>
 
 	* fix incorrectly applied patches
