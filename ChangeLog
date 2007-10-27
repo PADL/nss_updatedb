@@ -1,6 +1,11 @@
 $Id$
 ===============================================================
 
+8	Guido Guenther <agx@sigxcpu.org>
+
+	* load database into a temporary file for atomic
+	  switchover
+
 7	Guido Guenther <agx@sigxcpu.org>
 
 	* fix a segfault in cache.c

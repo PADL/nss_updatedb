@@ -32,6 +32,7 @@ struct nss_cache {
 	DB *db;
 	int index;
 #if DB_VERSION_MAJOR >= 4
+	char *tmpname;
 	DB_ENV *dbenv;
 	DB_TXN *dbtxn;
 #endif
@@ -62,6 +63,13 @@ enum nss_status nss_cache_init(const char *filename,
 #if DB_VERSION_MAJOR >= 4
 	cache->dbenv = NULL;
 	cache->dbtxn = NULL;
+
+	rc = asprintf(&cache->tmpname, "%s" TMP_EXT, cache->filename);
+	if (rc == -1) {
+		nss_cache_close(&cache);
+		errno = rc;
+		return NSS_STATUS_TRYAGAIN;
+	}
 
 	rc = db_env_create(&cache->dbenv, 0);
 	if (rc != 0) {
@@ -97,7 +105,7 @@ enum nss_status nss_cache_init(const char *filename,
 	}
 
 	rc = cache->db->open(cache->db,0,
-			     cache->filename,NULL, 
+			     cache->tmpname, NULL,
 			     DB_BTREE,DB_CREATE|DB_AUTO_COMMIT, mode);
 	if (rc != 0) {
 		nss_cache_close(&cache);
@@ -407,6 +415,18 @@ enum nss_status nss_cache_commit(nss_cache_t *cache)
 		return NSS_STATUS_UNAVAIL;
 	}
 
+#if DB_VERSION_MAJOR >= 4
+	cache->db->close(cache->db, 0);
+	cache->db = NULL; /* not usable anymore */
+	unlink(cache->filename);
+	rc = cache->dbenv->dbrename(cache->dbenv, NULL, cache->tmpname,
+	    			    NULL, cache->filename, 0);
+	if (rc != 0) {
+		errno = rc;
+		return NSS_STATUS_UNAVAIL;
+	}
+#endif
+
 	return NSS_STATUS_SUCCESS;
 }
 
@@ -436,6 +456,8 @@ enum nss_status nss_cache_close(nss_cache_t **cache_p)
 			cache->db->close(cache->db, 0);
 		if (cache->dbenv != NULL)
 			cache->dbenv->close(cache->dbenv, 0);
+		if (cache->tmpname != NULL)
+			free(cache->tmpname);
 #endif
 		if (cache->filename != NULL)
 			free(cache->filename);

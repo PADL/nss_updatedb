@@ -20,6 +20,8 @@
 #include <pwd.h>
 #include <grp.h>
 
+#define TMP_EXT ".tmp"
+
 struct nss_cache;
 typedef struct nss_cache nss_cache_t;
 
