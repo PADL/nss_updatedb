@@ -100,6 +100,7 @@ int main(int argc, char *argv[])
 		printf("done.\n");
 	}
 
-	exit(0);
-}
+	status = nss_backend_close(&handle);
 
+	return status;
+}

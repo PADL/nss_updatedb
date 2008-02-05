@@ -1,6 +1,10 @@
 $Id$
 ===============================================================
 
+9	Emmanuel Galanos <egalanos@anchor.net.au>
+
+	* return error codes to caller (useful for scripts)
+
 8	Guido Guenther <agx@sigxcpu.org>
 
 	* load database into a temporary file for atomic
