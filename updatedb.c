@@ -47,7 +47,7 @@ enum nss_status nss_backend_open(const char *dbname,
 
 	*handle_p = NULL;
 
-	snprintf(libpath, sizeof(libpath), "/lib/libnss_%s.so.2", dbname);
+	snprintf(libpath, sizeof(libpath), "libnss_%s.so.2", dbname);
 
 	handle = (nss_backend_handle_t *)calloc(1, sizeof(*handle));
 	if (handle == NULL) {

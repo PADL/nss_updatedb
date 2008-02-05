@@ -3,6 +3,7 @@ $Id$
 
 9	Emmanuel Galanos <egalanos@anchor.net.au>
 
+	* don't use absolute path for loading NSS library
 	* return error codes to caller (useful for scripts)
 	* limit number of realloc tries for NSS_STATUS_TRYAGAIN
 
