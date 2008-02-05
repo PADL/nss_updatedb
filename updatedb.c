@@ -149,6 +149,7 @@ static enum nss_status _nss_enumerate(nss_backend_handle_t *handle,
 	char *buffer;
 	size_t buflen = 1024;
 	enum nss_status status;
+	int max_retry = 10;
 	int errnop;
 	union {
 		struct passwd pw;
@@ -175,14 +176,20 @@ tryagain:
 	} while (status == NSS_STATUS_SUCCESS);
 
 	if (status == NSS_STATUS_TRYAGAIN) {
+		char *tmp;
+
 		buflen *= 2;
-		buffer = realloc(buffer, buflen);
-		if (buffer == NULL) {
+		tmp = realloc(buffer, buflen);
+		if (tmp == NULL) {
 			vtable->endent();
+			free(buffer);
 			return NSS_STATUS_TRYAGAIN;
 		}
+		buffer = tmp;
 		status = NSS_STATUS_SUCCESS; /* enter the loop again */
-		goto tryagain;
+		max_retry--;
+		if (max_retry >= 0)
+			goto tryagain;
 	}
 
 	vtable->endent();

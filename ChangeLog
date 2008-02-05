@@ -4,6 +4,7 @@ $Id$
 9	Emmanuel Galanos <egalanos@anchor.net.au>
 
 	* return error codes to caller (useful for scripts)
+	* limit number of realloc tries for NSS_STATUS_TRYAGAIN
 
 8	Guido Guenther <agx@sigxcpu.org>
 
