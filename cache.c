@@ -29,30 +29,26 @@
 
 struct nss_cache {
 	char *filename;
+	char *tmpfilename;
 	DB *db;
 	int index;
-#if DB_VERSION_MAJOR >= 4
-	char *tmpname;
-	DB_ENV *dbenv;
-	DB_TXN *dbtxn;
-#endif
 };
+
+static void nss_cache_error(const DB_ENV *dbenv, const char *errpfx, const char *msg)
+{
+	fprintf(stderr, "ERROR: nss_cache_error: %s\n", msg);
+}
 
 enum nss_status nss_cache_init(const char *filename,
 			       nss_cache_t **cache_p)
 {
 	nss_cache_t *cache;
 	int rc = -1, mode = 0644;
-	u_int32_t num=0;	
 
 	cache = (nss_cache_t *)calloc(1, sizeof(*cache));
 	if (cache == NULL) {
 		return NSS_STATUS_TRYAGAIN;
 	}
-
-	cache->filename = NULL;
-	cache->db = NULL;
-	cache->index = 0;
 
 	cache->filename = strdup(filename);
 	if (cache->filename == NULL) {
@@ -60,60 +56,30 @@ enum nss_status nss_cache_init(const char *filename,
 		return NSS_STATUS_TRYAGAIN;
 	}
 
-#if DB_VERSION_MAJOR >= 4
-	cache->dbenv = NULL;
-	cache->dbtxn = NULL;
-
-	rc = asprintf(&cache->tmpname, "%s" TMP_EXT, cache->filename);
-	if (rc == -1) {
+	/* Create a temporary database file */
+	cache->tmpfilename = strdup(DB_DIR "/tmpdbXXXXXX");
+	if (cache->tmpfilename == NULL) {
 		nss_cache_close(&cache);
-		errno = rc;
+		return NSS_STATUS_TRYAGAIN;
+	}
+	if (mktemp(cache->tmpfilename) == NULL) {
+		nss_cache_close(&cache);
 		return NSS_STATUS_TRYAGAIN;
 	}
 
-	rc = db_env_create(&cache->dbenv, 0);
+#if DB_VERSION_MAJOR >= 4
+	rc = db_create(&cache->db, NULL, 0);
 	if (rc != 0) {
 		nss_cache_close(&cache);
 		errno = rc;
 		return NSS_STATUS_UNAVAIL;
 	}
 
-	cache->dbenv->set_lg_max(cache->dbenv, 1 << 18);
-	cache->dbenv->set_flags(cache->dbenv, DB_LOG_AUTOREMOVE, 1);
+	cache->db->set_errcall(cache->db, &nss_cache_error);
 
-	rc = cache->dbenv->open(cache->dbenv, DB_DIR,
-		DB_CREATE|DB_INIT_LOG|DB_INIT_LOCK|DB_INIT_MPOOL|
-		DB_INIT_TXN|DB_RECOVER, mode);
-	if (rc != 0) {
-		nss_cache_close(&cache);
-		errno = rc;
-		return NSS_STATUS_UNAVAIL;
-	}
-
-	rc = db_create(&cache->db, cache->dbenv, 0);
-	if (rc != 0) {
-		nss_cache_close(&cache);
-		errno = rc;
-		return NSS_STATUS_UNAVAIL;
-	}
-
-	rc = cache->dbenv->txn_begin(cache->dbenv, NULL, &cache->dbtxn, 0);
-	if (rc != 0) {
-		nss_cache_close(&cache);
-		errno = rc;
-		return NSS_STATUS_UNAVAIL;
-	}
-
-	rc = cache->db->open(cache->db,0,
-			     cache->tmpname, NULL,
-			     DB_BTREE,DB_CREATE|DB_AUTO_COMMIT, mode);
-	if (rc != 0) {
-		nss_cache_close(&cache);
-		errno = rc;
-		return NSS_STATUS_UNAVAIL;
-	}
-
-	rc = cache->db->truncate(cache->db, cache->dbtxn, &num, 0);
+	rc = cache->db->open(cache->db, NULL,
+			     cache->tmpfilename, NULL, 
+			     DB_BTREE, DB_CREATE | DB_EXCL, mode);
 	if (rc != 0) {
 		nss_cache_close(&cache);
 		errno = rc;
@@ -127,7 +93,7 @@ enum nss_status nss_cache_init(const char *filename,
 		errno = rc;
 		return NSS_STATUS_UNAVAIL;
 	}
-	rc = cache->db->open(cache->db, cache->filename, NULL,
+	rc = cache->db->open(cache->db, cache->tmpfilename, NULL,
 			     DB_BTREE, DB_CREATE | DB_TRUNCATE, mode);
 	if (rc != 0) {
 		nss_cache_close(&cache);
@@ -135,7 +101,7 @@ enum nss_status nss_cache_init(const char *filename,
 		return NSS_STATUS_UNAVAIL;
 	}
 #elif DB_VERSION_MAJOR == 2
-	rc = db_open(cache->filename, DB_BTREE, DB_CREATE | DB_TRUNCATE,
+	rc = db_open(cache->tmpfilename, DB_BTREE, DB_CREATE | DB_TRUNCATE,
 		     mode, NULL, NULL, &cache->db);
 	if (rc != 0) {
 		nss_cache_close(&cache);
@@ -143,7 +109,7 @@ enum nss_status nss_cache_init(const char *filename,
 		return NSS_STATUS_UNAVAIL;
 	}
 #else
-	cache->db = dbopen(cache->filename, O_CREAT | O_TRUNC,
+	cache->db = dbopen(cache->tmpfilename, O_CREAT | O_TRUNC,
 			   mode, DB_BTREE, NULL);
 	if (cache->db == NULL) {
 		nss_cache_close(&cache);
@@ -174,7 +140,7 @@ enum nss_status nss_cache_put(nss_cache_t *cache,
 
 	rc = (cache->db->put)(cache->db,
 #if DB_VERSION_MAJOR >= 4
-			      cache->dbtxn,
+			      NULL,
 #elif DB_VERSION_MAJOR >= 2
 			      NULL,
 #endif
@@ -197,6 +163,8 @@ enum nss_status nss_cache_put(nss_cache_t *cache,
 #if DB_VERSION_MAJOR >= 2
 		errno = rc;
 #endif
+		fprintf(stderr, "Error: puting into DB: %s: key '%s' value '%s'\n", 
+			db_strerror(rc), (char *)db_key.data, (char *)db_val.data);
 		return NSS_STATUS_UNAVAIL;
 	}
 
@@ -401,12 +369,6 @@ enum nss_status nss_cache_commit(nss_cache_t *cache)
 	}
 #endif
 
-#if DB_VERSION_MAJOR >= 4
-	rc = cache->dbtxn->commit(cache->dbtxn, 0);
-	if (rc == 0 ) {
-		rc = cache->dbenv->txn_checkpoint(cache->dbenv, 0, 0, DB_FORCE);
-	}
-#endif
 	rc = (cache->db->sync)(cache->db, 0);
 	if (rc != 0) {
 #if DB_VERSION_MAJOR > 2
@@ -415,32 +377,24 @@ enum nss_status nss_cache_commit(nss_cache_t *cache)
 		return NSS_STATUS_UNAVAIL;
 	}
 
-#if DB_VERSION_MAJOR >= 4
-	cache->db->close(cache->db, 0);
-	cache->db = NULL; /* not usable anymore */
-	unlink(cache->filename);
-	rc = cache->dbenv->dbrename(cache->dbenv, NULL, cache->tmpname,
-	    			    NULL, cache->filename, 0);
+	/* Link temporary file to final filename.
+	   Use rename and link to avoid cache being unavailable. */
+	rc = rename(cache->tmpfilename, cache->filename);
 	if (rc != 0) {
-		errno = rc;
+		perror("rename");
 		return NSS_STATUS_UNAVAIL;
 	}
-#endif
+	rc = link(cache->filename, cache->tmpfilename);
+	if (rc != 0) {
+		perror("link");
+		return NSS_STATUS_UNAVAIL;
+	}
 
 	return NSS_STATUS_SUCCESS;
 }
 
 enum nss_status nss_cache_abort(nss_cache_t *cache)
 {
-#if DB_VERSION_MAJOR >= 4
-	int rc;
-
-	rc = cache->dbtxn->abort(cache->dbtxn);
-	if (rc != 0) {
-		errno = rc;
-	}
-#endif
-
 	return NSS_STATUS_UNAVAIL;
 }
 
@@ -454,17 +408,16 @@ enum nss_status nss_cache_close(nss_cache_t **cache_p)
 #if DB_VERSION_MAJOR >= 4
 		if (cache->db != NULL)
 			cache->db->close(cache->db, 0);
-		if (cache->dbenv != NULL)
-			cache->dbenv->close(cache->dbenv, 0);
-		if (cache->tmpname != NULL)
-			free(cache->tmpname);
 #endif
 		if (cache->filename != NULL)
 			free(cache->filename);
+		if (cache->tmpfilename != NULL) {
+			(void)unlink(cache->tmpfilename);
+			free(cache->tmpfilename);
+		}
 		free(cache);
 		*cache_p = NULL;
 	}
 
 	return NSS_STATUS_SUCCESS;
 }
-
