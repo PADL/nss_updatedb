@@ -1692,7 +1692,7 @@ fi
 
 # Define the identity of the package.
  PACKAGE=nss_updatedb
- VERSION=8
+ VERSION=9
 
 
 cat >>confdefs.h <<_ACEOF

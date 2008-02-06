@@ -1,6 +1,6 @@
 Summary: NSS update DB tool
 Name: nss_updatedb
-Version: 7
+Version: 9
 Release: 1
 Source0: %{name}.tgz
 Patch1: bugfix_out-of-mem.patch
