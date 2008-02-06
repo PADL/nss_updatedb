@@ -2,5 +2,5 @@
 # $Id$
 # $Name$
 ProjectName: nss_updatedb
-ProjectVersion: 8
+ProjectVersion: 9
 ProjectMaintainer: lukeh
