@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004 PADL Software Pty Ltd.
+ * Copyright (c) 2004-2008 PADL Software Pty Ltd.
  * All rights reserved.
  * Use is subject to license.
  */

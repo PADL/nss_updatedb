@@ -1,6 +1,12 @@
 $Id$
 ===============================================================
 
+10	Guido Guenther <agx@sigxcpu.org>
+
+	* add manual page
+	* return 0 exit code for NSS_STATUS_SUCCESS
+	  (see nss_err2exitcode for complete mapping)
+
 9	Emmanuel Galanos <egalanos@anchor.net.au>
 
 	* don't use absolute path for loading NSS library

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004 PADL Software Pty Ltd.
+ * Copyright (c) 2004-2008 PADL Software Pty Ltd.
  * All rights reserved.
  * Use is subject to license.
  */
@@ -12,10 +12,36 @@
 
 #include "updatedb.h"
 
+/* Return a sensible exit code so success == 0 */
+static int nss_err2exitcode(enum nss_status status)
+{
+	int serr;
+
+	switch (status) {
+	case NSS_STATUS_SUCCESS:
+		serr = 0;
+		break;
+	case NSS_STATUS_NOTFOUND:
+		serr = 1;
+		break;
+	case NSS_STATUS_UNAVAIL:
+		serr = 2;
+		break;
+	case NSS_STATUS_TRYAGAIN:
+		serr = 3;
+		break;
+	default:
+		serr = 4;
+		break;
+	}
+
+	return serr;
+}
+
 static void usage(void)
 {
 	fprintf(stderr, "Usage: nss_updatedb [nameservice] [passwd|group]\n");
-	exit(NSS_STATUS_UNAVAIL);
+	exit(nss_err2exitcode(NSS_STATUS_UNAVAIL));
 }
 
 static const char *nss_err2string(enum nss_status status)
@@ -57,7 +83,7 @@ int main(int argc, char *argv[])
 	dbname = argv[1];
 	if (strcmp(dbname, "db") == 0) {
 		fprintf(stderr, "Cannot run nss_updatedb against nss_db.\n");
-		exit(NSS_STATUS_UNAVAIL);
+		exit(nss_err2exitcode(NSS_STATUS_UNAVAIL));
 	}
 
 	if (argc == 3) {
@@ -77,7 +103,7 @@ int main(int argc, char *argv[])
 
 	status = nss_backend_open(dbname, &handle);
 	if (status != NSS_STATUS_SUCCESS) {
-		exit(status);
+		exit(nss_err2exitcode(status));
 	}
 
 	if (maps & MAP_PASSWD) {
@@ -85,7 +111,7 @@ int main(int argc, char *argv[])
 		status = nss_update_db(handle, MAP_PASSWD, DB_PASSWD);
 		if (status != NSS_STATUS_SUCCESS) {
 			printf("%s.\n", nss_err2string(status));
-			exit(status);
+			exit(nss_err2exitcode(status));
 		}
 		printf("done.\n");
 	}
@@ -95,12 +121,15 @@ int main(int argc, char *argv[])
 		status = nss_update_db(handle, MAP_GROUP, DB_GROUP);
 		if (status != NSS_STATUS_SUCCESS) {
 			printf("%s.\n", nss_err2string(status));
-			exit(status);
+			exit(nss_err2exitcode(status));
 		}
 		printf("done.\n");
 	}
 
 	status = nss_backend_close(&handle);
-
-	return status;
+	if (status != NSS_STATUS_SUCCESS) {
+		printf("%s.\n", nss_err2string(status));
+		exit(nss_err2exitcode(status));
+	}
+	return 0;
 }
